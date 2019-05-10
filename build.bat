@@ -1,0 +1,1 @@
+go build -o ./bin/server ./test/server/main.go

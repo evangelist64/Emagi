@@ -29,7 +29,6 @@ func (p *TCPServer) Start() {
 	log.Printf("listen on %s", p.conf.Address)
 	p.listener = listener
 
-	//接受客户端连接
 	var tempDelay time.Duration
 	for {
 		conn, err := p.listener.Accept()
@@ -46,13 +45,13 @@ func (p *TCPServer) Start() {
 				time.Sleep(tempDelay)
 				continue
 			}
-			//todo log
+			log.Printf("accept error, tcpServer exit")
 			return
 		}
 		tempDelay = 0
 
 		tcpConn := new(TCPConn)
-		tcpConn.conn = conn
+		tcpConn.Init(conn)
 
 		p.connsMutex.Lock()
 		if len(p.conns) >= 10000 {
@@ -72,7 +71,21 @@ func (p *TCPServer) Start() {
 
 				tcpConn.Close()
 			}()
-			tcpConn.Run()
+
+			tcpConn.RunReadLoop()
+		}()
+
+		go func() {
+
+			defer func() {
+				p.connsMutex.Lock()
+				delete(p.conns, *tcpConn)
+				p.connsMutex.Unlock()
+
+				tcpConn.Close()
+			}()
+
+			tcpConn.RunWriteLoop()
 		}()
 	}
 }
