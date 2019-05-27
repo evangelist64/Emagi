@@ -21,19 +21,13 @@ func (p *TCPClient) Start() {
 		return
 	}
 
-	tcpConn := new(TCPConn)
-	tcpConn.Init(conn)
-	p.conn = tcpConn
-
-	go func() {
-		defer tcpConn.Close()
-		tcpConn.RunReadLoop()
-	}()
-
-	go func() {
-		defer tcpConn.Close()
-		tcpConn.RunWriteLoop()
-	}()
+	//创建连接
+	p.conn = &TCPConn{
+		conn:      conn,
+		wChan:     make(chan []byte, 100),
+		closeFlag: false,
+	}
+	go p.conn.Run()
 }
 
 func (p *TCPClient) WriteMsg(b []byte) {
@@ -41,5 +35,5 @@ func (p *TCPClient) WriteMsg(b []byte) {
 }
 
 func (p *TCPClient) Close() {
-	p.conn.Close()
+	p.conn.Destroy()
 }

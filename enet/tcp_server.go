@@ -2,6 +2,7 @@ package enet
 
 import (
 	"Emagi/config"
+	"context"
 	"log"
 	"net"
 	"sync"
@@ -12,13 +13,19 @@ type TCPServer struct {
 	conf     *config.ServerConf
 	listener net.Listener
 
-	conns      map[TCPConn]struct{}
-	connsMutex sync.Mutex
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	wg *sync.WaitGroup
 }
 
 func (p *TCPServer) Init(conf *config.ServerConf) {
+
 	p.conf = conf
-	p.conns = make(map[TCPConn]struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	p.ctx = ctx
+	p.cancel = cancel
+	p.wg = &sync.WaitGroup{}
 }
 
 func (p *TCPServer) Start() {
@@ -50,51 +57,21 @@ func (p *TCPServer) Start() {
 		}
 		tempDelay = 0
 
-		tcpConn := new(TCPConn)
-		tcpConn.Init(conn)
-
-		p.connsMutex.Lock()
-		if len(p.conns) >= 10000 {
-			p.connsMutex.Unlock()
-			conn.Close()
-			continue
+		p.wg.Add(1)
+		//创建连接
+		tcpConn := &TCPConn{
+			conn:      conn,
+			wChan:     make(chan []byte, 100),
+			closeFlag: false,
+			belongTo:  p,
 		}
-		p.conns[*tcpConn] = struct{}{}
-		p.connsMutex.Unlock()
+		tcpConn.ctx, tcpConn.cancel = context.WithCancel(p.ctx)
 
-		go func() {
-
-			defer func() {
-				p.connsMutex.Lock()
-				delete(p.conns, *tcpConn)
-				p.connsMutex.Unlock()
-
-				tcpConn.Close()
-			}()
-
-			tcpConn.RunReadLoop()
-		}()
-
-		go func() {
-
-			defer func() {
-				p.connsMutex.Lock()
-				delete(p.conns, *tcpConn)
-				p.connsMutex.Unlock()
-
-				tcpConn.Close()
-			}()
-
-			tcpConn.RunWriteLoop()
-		}()
+		go tcpConn.Run()
 	}
 }
 
 func (p *TCPServer) Close() {
-	p.connsMutex.Lock()
-	for tcpConn := range p.conns {
-		tcpConn.Close()
-	}
-	p.conns = nil
-	p.connsMutex.Unlock()
+	p.cancel()
+	p.wg.Wait()
 }
