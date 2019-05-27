@@ -1,6 +1,7 @@
 package enet
 
 import (
+	"context"
 	"log"
 	"net"
 	"time"
@@ -27,6 +28,7 @@ func (p *TCPClient) Start() {
 		wChan:     make(chan []byte, 100),
 		closeFlag: false,
 	}
+	p.conn.ctx, p.conn.cancel = context.WithCancel(context.TODO())
 	go p.conn.Run()
 }
 

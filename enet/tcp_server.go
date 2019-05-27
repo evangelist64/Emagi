@@ -16,7 +16,8 @@ type TCPServer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	wg *sync.WaitGroup
+	wgConns *sync.WaitGroup
+	// wgAccept *sync.WaitGroup
 }
 
 func (p *TCPServer) Init(conf *config.ServerConf) {
@@ -25,7 +26,8 @@ func (p *TCPServer) Init(conf *config.ServerConf) {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.ctx = ctx
 	p.cancel = cancel
-	p.wg = &sync.WaitGroup{}
+	p.wgConns = &sync.WaitGroup{}
+	// p.wgAccept = &sync.WaitGroup{}
 }
 
 func (p *TCPServer) Start() {
@@ -35,6 +37,8 @@ func (p *TCPServer) Start() {
 	}
 	log.Printf("listen on %s", p.conf.Address)
 	p.listener = listener
+
+	// p.wgAccept.Add(1)
 
 	var tempDelay time.Duration
 	for {
@@ -57,7 +61,7 @@ func (p *TCPServer) Start() {
 		}
 		tempDelay = 0
 
-		p.wg.Add(1)
+		p.wgConns.Add(1)
 		//创建连接
 		tcpConn := &TCPConn{
 			conn:      conn,
@@ -68,10 +72,20 @@ func (p *TCPServer) Start() {
 		tcpConn.ctx, tcpConn.cancel = context.WithCancel(p.ctx)
 
 		go tcpConn.Run()
+
+		select {
+		case <-p.ctx.Done():
+			log.Println("stop accept loop")
+			return
+		default:
+		}
 	}
 }
 
 func (p *TCPServer) Close() {
 	p.cancel()
-	p.wg.Wait()
+	p.listener.Close()
+
+	p.wgConns.Wait()
+	log.Printf("all conn closed")
 }

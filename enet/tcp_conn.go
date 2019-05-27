@@ -22,7 +22,7 @@ func (p *TCPConn) Destroy() {
 	p.cancel()
 
 	if p.belongTo != nil {
-		p.belongTo.wg.Done()
+		p.belongTo.wgConns.Done()
 	}
 	log.Println("destroy TCPConn")
 }
@@ -69,7 +69,7 @@ func (p *TCPConn) Run() {
 
 		select {
 		case <-p.ctx.Done():
-			log.Println("ctx stop readloop")
+			log.Println("stop read loop")
 			return
 		default:
 		}
