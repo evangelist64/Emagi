@@ -17,7 +17,6 @@ type TCPServer struct {
 	cancel context.CancelFunc
 
 	wgConns *sync.WaitGroup
-	// wgAccept *sync.WaitGroup
 }
 
 func (p *TCPServer) Init(conf *config.ServerConf) {
@@ -27,7 +26,6 @@ func (p *TCPServer) Init(conf *config.ServerConf) {
 	p.ctx = ctx
 	p.cancel = cancel
 	p.wgConns = &sync.WaitGroup{}
-	// p.wgAccept = &sync.WaitGroup{}
 }
 
 func (p *TCPServer) Start() {
@@ -37,8 +35,6 @@ func (p *TCPServer) Start() {
 	}
 	log.Printf("listen on %s", p.conf.Address)
 	p.listener = listener
-
-	// p.wgAccept.Add(1)
 
 	var tempDelay time.Duration
 	for {

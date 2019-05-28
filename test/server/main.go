@@ -7,7 +7,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"sync"
-	"time"
 )
 
 func main() {
@@ -24,11 +23,11 @@ func main() {
 	tcpServer.Init(&serverConf)
 
 	//test close
-	go func() {
-		time.Sleep(8 * time.Second)
-		log.Println("close server")
-		tcpServer.Close()
-	}()
+	// go func() {
+	// 	time.Sleep(8 * time.Second)
+	// 	log.Println("close server")
+	// 	tcpServer.Close()
+	// }()
 
 	wg.Add(1)
 	go func() {
