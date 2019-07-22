@@ -13,19 +13,29 @@ type TCPServer struct {
 	conf     *config.ServerConf
 	listener net.Listener
 
+	conns   *sync.Map
+	wgConns *sync.WaitGroup
+
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	wgConns *sync.WaitGroup
+	curConnId uint32
 }
 
-func (p *TCPServer) Init(conf *config.ServerConf) {
+func NewServer(conf *config.ServerConf) *TCPServer {
+	s := &TCPServer{
+		conf:      conf,
+		conns:     &sync.Map{},
+		wgConns:   &sync.WaitGroup{},
+		curConnId: 0,
+	}
+	s.ctx, s.cancel = context.WithCancel(context.Background())
+	return s
+}
 
-	p.conf = conf
-	ctx, cancel := context.WithCancel(context.Background())
-	p.ctx = ctx
-	p.cancel = cancel
-	p.wgConns = &sync.WaitGroup{}
+func (p *TCPServer) getIncConnId() uint32 {
+	p.curConnId++
+	return p.curConnId
 }
 
 func (p *TCPServer) Start() {
@@ -60,27 +70,22 @@ func (p *TCPServer) Start() {
 		p.wgConns.Add(1)
 		//创建连接
 		tcpConn := &TCPConn{
-			conn:      conn,
-			wChan:     make(chan []byte, 100),
-			closeFlag: false,
-			belongTo:  p,
+			Id:       p.getIncConnId(),
+			conn:     &conn,
+			wChan:    make(chan []byte, 100),
+			wg:       &sync.WaitGroup{},
+			wgParent: p.wgConns,
 		}
 		tcpConn.ctx, tcpConn.cancel = context.WithCancel(p.ctx)
+		p.conns.Store(tcpConn.Id, tcpConn)
 
 		go tcpConn.Run()
-
-		select {
-		case <-p.ctx.Done():
-			log.Println("stop accept loop")
-			return
-		default:
-		}
 	}
 }
 
 func (p *TCPServer) Close() {
-	p.cancel()
 	p.listener.Close()
+	p.cancel()
 
 	p.wgConns.Wait()
 	log.Printf("all conn closed")

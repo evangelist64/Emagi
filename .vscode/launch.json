@@ -27,7 +27,19 @@
             "env": {},
             "args": [],
             "showLog": true
-        }
+        },
+        {
+            "name": "Run Test",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "remotePath": "",
+            "program": "${workspaceFolder}/test/test.go", //workspaceRoot
+            "cwd": "${workspaceFolder}/bin",
+            "env": {},
+            "args": [],
+            "showLog": true
+        },
     ],
     "compounds":[
         {

@@ -12,15 +12,14 @@ import (
 func main() {
 
 	wg := sync.WaitGroup{}
-	//pprof
+	//pprof host
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	serverConf := config.ServerConf{}
 	serverConf.Init("./server_conf.json")
-	tcpServer := enet.TCPServer{}
-	tcpServer.Init(&serverConf)
+	tcpServer := enet.NewServer(&serverConf)
 
 	//test close
 	// go func() {

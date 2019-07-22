@@ -1,34 +1,51 @@
 package enet
 
 import (
+	"Emagi/config"
 	"context"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
 type TCPClient struct {
-	conn *TCPConn
+	conn *TCPConn           //todo改成支持多个连接
+	conf *config.ServerConf //todo改成客户端配置
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
-func (p *TCPClient) Init() {
+func NewClient(conf *config.ServerConf) *TCPClient {
+	c := &TCPClient{
+		conf: conf,
+		conn: nil,
+	}
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	return c
 }
 
 func (p *TCPClient) Start() {
 
-	conn, err := net.DialTimeout("tcp", "127.0.0.1:20000", 5*time.Second)
+	//TODO 尝试重连
+	conn, err := net.DialTimeout("tcp", p.conf.Address, 5*time.Second)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
 	//创建连接
-	p.conn = &TCPConn{
-		conn:      conn,
-		wChan:     make(chan []byte, 100),
-		closeFlag: false,
+	tcpConn := &TCPConn{
+		Id:       0,
+		conn:     &conn,
+		wChan:    make(chan []byte, 100),
+		wg:       &sync.WaitGroup{},
+		wgParent: nil,
 	}
-	p.conn.ctx, p.conn.cancel = context.WithCancel(context.TODO())
+	tcpConn.ctx, tcpConn.cancel = context.WithCancel(p.ctx)
+	p.conn = tcpConn
+
 	go p.conn.Run()
 }
 
@@ -37,5 +54,5 @@ func (p *TCPClient) WriteMsg(b []byte) {
 }
 
 func (p *TCPClient) Close() {
-	p.conn.Destroy()
+	p.cancel()
 }
