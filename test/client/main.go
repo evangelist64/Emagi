@@ -2,20 +2,24 @@ package main
 
 import (
 	"Emagi/config"
-	"Emagi/enet"
+	"Emagi/log"
+	"Emagi/net/tcp"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 )
 
 func main() {
+	//log
+	log.Init("Client")
+	go log.Run()
+
 	wg := sync.WaitGroup{}
 	for i := 0; i < 3; i++ {
 
 		serverConf := config.ServerConf{}
 		serverConf.Init("./server_conf.json")
-		tcpClient := enet.NewClient(&serverConf)
+		tcpClient := tcp.NewClient(&serverConf)
 		tcpClient.Start()
 
 		go func(idx int) {
@@ -27,13 +31,13 @@ func main() {
 
 		wg.Add(1)
 		//test close
-		go func() {
-			time.Sleep(8 * time.Second)
-			log.Println("close client")
-			tcpClient.Close()
-			wg.Done()
-		}()
+		// go func() {
+		// 	time.Sleep(8 * time.Second)
+		// 	log.Println("close client")
+		// 	tcpClient.Close()
+		// 	wg.Done()
+		// }()
 	}
 	wg.Wait()
-	log.Println("end")
+	log.Write("end")
 }

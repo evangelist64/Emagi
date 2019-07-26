@@ -2,24 +2,27 @@ package main
 
 import (
 	"Emagi/config"
-	"Emagi/enet"
-	"log"
+	"Emagi/log"
+	"Emagi/net/tcp"
 	"net/http"
 	_ "net/http/pprof"
 	"sync"
 )
 
 func main() {
+	//log
+	log.Init("Server")
+	go log.Run()
 
 	wg := sync.WaitGroup{}
 	//pprof host
 	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
+		http.ListenAndServe("localhost:6060", nil)
 	}()
 
 	serverConf := config.ServerConf{}
 	serverConf.Init("./server_conf.json")
-	tcpServer := enet.NewServer(&serverConf)
+	tcpServer := tcp.NewServer(&serverConf)
 
 	//test close
 	// go func() {
