@@ -12,7 +12,6 @@ import (
 func main() {
 	//log
 	log.Init("Server")
-	go log.Run()
 
 	wg := sync.WaitGroup{}
 	//pprof host

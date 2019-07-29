@@ -9,26 +9,66 @@ import (
 
 const MAX_LOG_FILE_SIZE = 1024 * 1024 * 10 //单文件最大10M
 
+const (
+	DEBUG = iota
+	NORMAL
+	ERROR
+	FATAL
+)
+
 //rotatable log
 var lm LogManager
 
 type LogManager struct {
-	msgChan  chan string
 	logger   *log.Logger
 	file     *os.File
 	fileName string
 }
 
 func Init(fileName string) bool {
-	lm.msgChan = make(chan string, 1000)
 	lm.fileName = fileName
 	lm.file, lm.logger = newLogger()
 	return lm.file == nil || lm.logger == nil
 }
 
-//todo 扩展一下write，加上前缀分级
+func Info(str string) {
+	lm.logger.SetPrefix("[NORMAL]")
+	Write(str)
+}
+
+func Debug(str string) {
+	lm.logger.SetPrefix("[DEBUG]")
+	Write(str)
+}
+
+func Error(str string) {
+	lm.logger.SetPrefix("[ERROR]")
+	Write(str)
+}
+
+func Fatal(str string) {
+	lm.logger.SetPrefix("[FATAL]")
+	Write(str)
+}
+
 func Write(str string) {
-	lm.msgChan <- str
+
+	lm.logger.Println(str)
+
+	fi, err := lm.file.Stat()
+	if err != nil {
+		fmt.Println("get log file state failed")
+	} else {
+		//rotate
+		if fi.Size() > MAX_LOG_FILE_SIZE {
+			lm.file.Close()
+			file, logger := newLogger()
+			if file != nil && logger != nil {
+				lm.file = file
+				lm.logger = logger
+			}
+		}
+	}
 }
 
 func newLogger() (*os.File, *log.Logger) {
@@ -42,24 +82,4 @@ func newLogger() (*os.File, *log.Logger) {
 		logger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
 	}
 	return logFile, logger
-}
-
-func Run() {
-	for msg := range lm.msgChan {
-		lm.logger.Println(msg)
-		fi, err := lm.file.Stat()
-		if err != nil {
-			fmt.Println("get log file state failed")
-		} else {
-			//rotate
-			if fi.Size() > MAX_LOG_FILE_SIZE {
-				lm.file.Close()
-				file, logger := newLogger()
-				if file != nil && logger != nil {
-					lm.file = file
-					lm.logger = logger
-				}
-			}
-		}
-	}
 }

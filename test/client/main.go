@@ -12,7 +12,6 @@ import (
 func main() {
 	//log
 	log.Init("Client")
-	go log.Run()
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < 3; i++ {

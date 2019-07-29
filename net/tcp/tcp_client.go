@@ -31,7 +31,7 @@ func (p *TCPClient) Start() {
 	//TODO 尝试重连
 	conn, err := net.DialTimeout("tcp", p.conf.Address, 5*time.Second)
 	if err != nil {
-		log.Write(err.Error())
+		log.Error(err.Error())
 		return
 	}
 

@@ -21,7 +21,7 @@ type TCPConn struct {
 func (p *TCPConn) Destroy() {
 	close(p.wChan)
 	(*p.conn).Close()
-	log.Write("destroy TCPConn")
+	log.Debug("destroy TCPConn")
 }
 
 func (p *TCPConn) WriteMsg(b []byte) {
@@ -32,7 +32,7 @@ func (p *TCPConn) WriteMsg(b []byte) {
 	default:
 		//写满了
 		if len(p.wChan) == cap(p.wChan) {
-			log.Write("wChan full, send failed")
+			log.Error("wChan full, send failed")
 			return
 		}
 		p.wChan <- b
@@ -60,13 +60,13 @@ func (p *TCPConn) Run() {
 				b := <-p.wChan
 				//close
 				if b == nil {
-					log.Write("wChan close sig")
+					log.Info("wChan close sig")
 					return
 				}
 
 				_, err := (*p.conn).Write(b)
 				if err != nil {
-					log.Write("write error, break")
+					log.Error("write error, break")
 					return
 				}
 			}
@@ -89,17 +89,17 @@ func (p *TCPConn) Run() {
 	for {
 		select {
 		case <-p.ctx.Done():
-			log.Write("ctx done, read loop stop")
+			log.Info("ctx done, read loop stop")
 			return
 		default:
 			var b [10]byte
 			n, err := (*p.conn).Read(b[:])
 			if err != nil {
-				log.Write("read error, read loop stop")
+				log.Error("read error, read loop stop")
 				return
 			}
 			if n > 0 {
-				log.Write(string(b[:]))
+				log.Debug(string(b[:]))
 			}
 		}
 	}

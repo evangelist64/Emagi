@@ -44,7 +44,7 @@ func (p *TCPServer) Start() {
 	if err != nil {
 		log.Write(err.Error())
 	}
-	log.Write(fmt.Sprintf("listen on %s", p.conf.Address))
+	log.Info(fmt.Sprintf("listen on %s", p.conf.Address))
 	p.listener = listener
 
 	var tempDelay time.Duration
@@ -63,7 +63,7 @@ func (p *TCPServer) Start() {
 				time.Sleep(tempDelay)
 				continue
 			}
-			log.Write("accept error, tcpServer exit")
+			log.Error("accept error, tcpServer exit")
 			return
 		}
 		tempDelay = 0.
@@ -89,5 +89,5 @@ func (p *TCPServer) Close() {
 	p.cancel()
 
 	p.wgConns.Wait()
-	log.Write("all conns closed")
+	log.Info("all conns closed")
 }
