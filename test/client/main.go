@@ -3,10 +3,13 @@ package main
 import (
 	"Emagi/config"
 	"Emagi/log"
+	"Emagi/net/msg"
 	"Emagi/net/tcp"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 )
 
 func main() {
@@ -23,7 +26,12 @@ func main() {
 
 		go func(idx int) {
 			for j := 0; j < 50; j++ {
-				tcpClient.WriteMsg([]byte(fmt.Sprintf("hello%d", idx)))
+				msg := &msg.TestMsg{
+					Text: fmt.Sprintf("hello%d", idx),
+					Type: 123,
+				}
+				data, _ := proto.Marshal(msg)
+				tcpClient.WriteMsg(data)
 				time.Sleep(2 * time.Second)
 			}
 		}(i)
