@@ -53,7 +53,10 @@ func Fatal(str string) {
 
 func Write(str string) {
 
+	//文件输出
 	lm.logger.Println(str)
+	//控制台输出
+	log.Println(str)
 
 	fi, err := lm.file.Stat()
 	if err != nil {

@@ -1,8 +1,13 @@
 syntax="proto3";
  
-package msg;
+package data;
 
 message TestMsg {
+	string text = 1;
+	int32 type = 2;
+}
+
+message TestMsg2 {
 	string text = 1;
 	int32 type = 2;
 }

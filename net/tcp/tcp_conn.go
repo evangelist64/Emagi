@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"Emagi/data"
 	"Emagi/log"
 	"context"
 	"net"
@@ -9,10 +10,12 @@ import (
 
 type TCPConn struct {
 	Id       uint32
-	conn     *net.Conn
-	wChan    chan []byte //写channel
+	conn     net.Conn
+	wChan    chan interface{} //写channel
 	wg       *sync.WaitGroup
 	wgParent *sync.WaitGroup
+
+	dp data.DataProcessor
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -20,11 +23,11 @@ type TCPConn struct {
 
 func (p *TCPConn) Destroy() {
 	close(p.wChan)
-	(*p.conn).Close()
+	p.conn.Close()
 	log.Debug("destroy TCPConn")
 }
 
-func (p *TCPConn) WriteMsg(b []byte) {
+func (p *TCPConn) WriteMsg(msg interface{}) {
 	select {
 	//已经关闭,不让再写进去
 	case <-p.ctx.Done():
@@ -35,7 +38,7 @@ func (p *TCPConn) WriteMsg(b []byte) {
 			log.Error("wChan full, send failed")
 			return
 		}
-		p.wChan <- b
+		p.wChan <- msg
 	}
 }
 
@@ -57,14 +60,14 @@ func (p *TCPConn) Run() {
 			case <-ctxw.Done():
 				return
 			default:
-				b := <-p.wChan
+				msg := <-p.wChan
 				//close
-				if b == nil {
+				if msg == nil {
 					log.Info("wChan close sig")
 					return
 				}
 
-				_, err := (*p.conn).Write(b)
+				err := p.dp.Serialize(msg, p.conn)
 				if err != nil {
 					log.Error("write error, break")
 					return
@@ -92,14 +95,12 @@ func (p *TCPConn) Run() {
 			log.Info("ctx done, read loop stop")
 			return
 		default:
-			var b [10]byte
+			//todo 扔回主循环处理
+			p.dp.UnSerialize(p.conn,)
 			n, err := (*p.conn).Read(b[:])
 			if err != nil {
 				log.Error("read error, read loop stop")
 				return
-			}
-			if n > 0 {
-				log.Debug(string(b[:]))
 			}
 		}
 	}

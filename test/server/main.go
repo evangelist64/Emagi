@@ -2,26 +2,40 @@ package main
 
 import (
 	"Emagi/config"
+	"Emagi/data"
 	"Emagi/log"
 	"Emagi/net/tcp"
 	"net/http"
 	_ "net/http/pprof"
 	"sync"
+
+	"github.com/golang/protobuf/proto"
 )
 
-func main() {
-	//log
-	log.Init("Server")
+var pbProcessor = &data.PBProcessor{}
 
-	wg := sync.WaitGroup{}
+func OnTestMsg(p proto.Message) {
+	testMsg := p.(*msg.TestMsg)
+	log.Info(testMsg.GetText())
+}
+
+func main() {
 	//pprof host
 	go func() {
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 
+	//log
+	log.Init("./logs/Server")
+
+	//processor init
+	pbProcessor.Register((*msg.TestMsg)(nil), OnTestMsg)
+
+	wg := sync.WaitGroup{}
+
 	serverConf := config.ServerConf{}
 	serverConf.Init("./server_conf.json")
-	tcpServer := tcp.NewServer(&serverConf)
+	tcpServer := tcp.NewServer(&serverConf, pbProcessor)
 
 	//test close
 	// go func() {

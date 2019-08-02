@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"Emagi/config"
+	"Emagi/data"
 	"Emagi/log"
 	"context"
 	"fmt"
@@ -20,10 +21,11 @@ type TCPServer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
+	dp        data.DataProcessor
 	curConnId uint32
 }
 
-func NewServer(conf *config.ServerConf) *TCPServer {
+func NewServer(conf *config.ServerConf, dp data.DataProcessor) *TCPServer {
 	s := &TCPServer{
 		conf:      conf,
 		conns:     &sync.Map{},
@@ -31,6 +33,7 @@ func NewServer(conf *config.ServerConf) *TCPServer {
 		curConnId: 0,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
+	s.dp = dp
 	return s
 }
 
@@ -72,10 +75,11 @@ func (p *TCPServer) Start() {
 		//创建连接
 		tcpConn := &TCPConn{
 			Id:       p.getIncConnId(),
-			conn:     &conn,
-			wChan:    make(chan []byte, 100),
+			conn:     conn,
+			wChan:    make(chan interface{}, 100),
 			wg:       &sync.WaitGroup{},
 			wgParent: p.wgConns,
+			dp:       p.dp,
 		}
 		tcpConn.ctx, tcpConn.cancel = context.WithCancel(p.ctx)
 		p.conns.Store(tcpConn.Id, tcpConn)

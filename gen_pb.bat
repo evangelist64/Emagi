@@ -1,1 +1,3 @@
-protoc --go_out=. ./net/msg/msg.proto
+protoc --go_out=. ./data/msg.proto
+
+@pause
