@@ -54,7 +54,7 @@ func (p *TCPClient) Start() {
 	go p.conn.Run()
 }
 
-func (p *TCPClient) WriteMsg(msg *interface{}) {
+func (p *TCPClient) WriteMsg(msg interface{}) {
 	p.conn.WriteMsg(msg)
 }
 

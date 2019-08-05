@@ -5,7 +5,6 @@ import (
 	"Emagi/data"
 	"Emagi/log"
 	"Emagi/net/tcp"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -15,6 +14,7 @@ var pbProcessor = &data.PBProcessor{}
 func main() {
 	//log
 	log.Init("./logs/Client")
+	pbProcessor.Init()
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < 3; i++ {
@@ -27,16 +27,11 @@ func main() {
 		go func(idx int) {
 			for j := 0; j < 50; j++ {
 
-				msg := &msg.TestMsg{
-					Text: fmt.Sprintf("hello%d", idx),
-					Type: 123,
+				msg := &data.TestMsg{
+					Text: "hello",
+					Type: int32(idx),
 				}
-				err := pbProcessor.Serialize(msg)
-				if err != nil {
-					log.Error(err.Error())
-					continue
-				}
-				tcpClient.WriteMsg(data)
+				tcpClient.WriteMsg(msg)
 
 				time.Sleep(2 * time.Second)
 			}

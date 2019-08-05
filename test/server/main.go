@@ -7,6 +7,7 @@ import (
 	"Emagi/net/tcp"
 	"net/http"
 	_ "net/http/pprof"
+	"strconv"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
@@ -15,8 +16,8 @@ import (
 var pbProcessor = &data.PBProcessor{}
 
 func OnTestMsg(p proto.Message) {
-	testMsg := p.(*msg.TestMsg)
-	log.Info(testMsg.GetText())
+	testMsg := p.(*data.TestMsg)
+	log.Info(testMsg.GetText() + strconv.Itoa((int)(testMsg.GetType())))
 }
 
 func main() {
@@ -29,7 +30,8 @@ func main() {
 	log.Init("./logs/Server")
 
 	//processor init
-	pbProcessor.Register((*msg.TestMsg)(nil), OnTestMsg)
+	pbProcessor.Init()
+	pbProcessor.Register((*data.TestMsg)(nil), OnTestMsg)
 
 	wg := sync.WaitGroup{}
 

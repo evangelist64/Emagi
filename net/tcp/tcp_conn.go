@@ -95,9 +95,7 @@ func (p *TCPConn) Run() {
 			log.Info("ctx done, read loop stop")
 			return
 		default:
-			//todo 扔回主循环处理
-			p.dp.UnSerialize(p.conn,)
-			n, err := (*p.conn).Read(b[:])
+			err := p.dp.Unserialize(p.conn)
 			if err != nil {
 				log.Error("read error, read loop stop")
 				return
