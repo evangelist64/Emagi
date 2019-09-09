@@ -2,25 +2,28 @@ package log
 
 import (
 	"Emagi/log"
-	"sync"
 	"testing"
 )
 
 func TestLog(t *testing.T) {
 
-	log.Init("Test")
+	log.Init("Test", true)
+	go log.Run()
 
-	for i := 0; i < 100000; i++ {
-		log.Debug("ffffffffffffffggggggggggggg")
-	}
-
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	go func() {
 		for i := 0; i < 100000; i++ {
-			log.Info("ffffffffffffffggggggggggggg")
+			log.Info("b")
 		}
-		wg.Done()
 	}()
-	wg.Wait()
+
+	go func() {
+		for i := 0; i < 100000; i++ {
+			log.Info("c")
+		}
+	}()
+
+	for i := 0; i < 100000; i++ {
+		log.Debug("a")
+	}
+
 }

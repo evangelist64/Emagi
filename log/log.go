@@ -22,56 +22,67 @@ var lm LogManager
 type LogManager struct {
 	logger   *log.Logger
 	file     *os.File
+	msgChan  chan string
 	fileName string
+	isDebug  bool
 }
 
-func Init(fileName string) bool {
+func Init(fileName string, isDebug bool) bool {
 	lm.fileName = fileName
+	lm.isDebug = isDebug
+	lm.msgChan = make(chan string, 100)
 	lm.file, lm.logger = newLogger()
 	return lm.file == nil || lm.logger == nil
 }
 
-func Info(str string) {
-	lm.logger.SetPrefix("[NORMAL]")
-	Write(str)
-}
+func Run() {
 
-func Debug(str string) {
-	lm.logger.SetPrefix("[DEBUG]")
-	Write(str)
-}
+	for {
+		str := <-lm.msgChan
+		//控制台输出
+		if lm.isDebug {
+			log.Println(str)
+		}
+		//文件输出
+		lm.logger.Println(str)
 
-func Error(str string) {
-	lm.logger.SetPrefix("[ERROR]")
-	Write(str)
-}
-
-func Fatal(str string) {
-	lm.logger.SetPrefix("[FATAL]")
-	Write(str)
-}
-
-func Write(str string) {
-
-	//文件输出
-	lm.logger.Println(str)
-	//控制台输出
-	log.Println(str)
-
-	fi, err := lm.file.Stat()
-	if err != nil {
-		fmt.Println("get log file state failed")
-	} else {
-		//rotate
-		if fi.Size() > MAX_LOG_FILE_SIZE {
-			lm.file.Close()
-			file, logger := newLogger()
-			if file != nil && logger != nil {
-				lm.file = file
-				lm.logger = logger
+		fi, err := lm.file.Stat()
+		if err != nil {
+			fmt.Println("get log file state failed")
+		} else {
+			//rotate
+			if fi.Size() > MAX_LOG_FILE_SIZE {
+				lm.file.Close()
+				file, logger := newLogger()
+				if file != nil && logger != nil {
+					lm.file = file
+					lm.logger = logger
+				}
 			}
 		}
 	}
+}
+
+func Info(str string) {
+	Write("[NORMAL]" + str)
+}
+
+func Debug(str string) {
+	if lm.isDebug {
+		Write("[DEBUG]" + str)
+	}
+}
+
+func Error(str string) {
+	Write("[ERROR]" + str)
+}
+
+func Fatal(str string) {
+	Write("[FATAL]" + str)
+}
+
+func Write(str string) {
+	lm.msgChan <- str
 }
 
 func newLogger() (*os.File, *log.Logger) {

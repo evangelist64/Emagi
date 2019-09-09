@@ -26,8 +26,12 @@ func main() {
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 
+	serverConf := config.ServerConf{}
+	serverConf.Init("./server_conf.json")
+
 	//log
-	log.Init("./logs/Server")
+	log.Init(serverConf.LogPath+"/Server", serverConf.IsDebug)
+	go log.Run()
 
 	//processor init
 	pbProcessor.Init()
@@ -35,8 +39,6 @@ func main() {
 
 	wg := sync.WaitGroup{}
 
-	serverConf := config.ServerConf{}
-	serverConf.Init("./server_conf.json")
 	tcpServer := tcp.NewServer(&serverConf, pbProcessor)
 
 	//test close

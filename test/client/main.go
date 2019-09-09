@@ -12,15 +12,18 @@ import (
 var pbProcessor = &data.PBProcessor{}
 
 func main() {
+
+	serverConf := config.ServerConf{}
+	serverConf.Init("./server_conf.json")
 	//log
-	log.Init("./logs/Client")
+	log.Init(serverConf.LogPath+"Client", serverConf.IsDebug)
+	go log.Run()
+	//pb
 	pbProcessor.Init()
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < 3; i++ {
 
-		serverConf := config.ServerConf{}
-		serverConf.Init("./server_conf.json")
 		tcpClient := tcp.NewClient(&serverConf, pbProcessor)
 		tcpClient.Start()
 
