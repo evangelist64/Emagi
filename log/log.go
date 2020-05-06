@@ -22,7 +22,7 @@ var lm LogManager
 type LogManager struct {
 	logger   *log.Logger
 	file     *os.File
-	msgChan  chan string
+	msgChan  chan string //其实不做同步，也只是单文件大小偶尔会超。暂且做一下吧，成本也不大
 	fileName string
 	isDebug  bool
 }

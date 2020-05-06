@@ -15,13 +15,14 @@ type TCPServer struct {
 	conf     *config.ServerConf
 	listener net.Listener
 
-	conns   *sync.Map
-	wgConns *sync.WaitGroup
+	conns   *sync.Map       //add和遍历操作不在同个协程上
+	wgConns *sync.WaitGroup //等待子协程结束
+
+	dp data.DataProcessor
 
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	dp        data.DataProcessor
 	curConnId uint32
 }
 
@@ -42,7 +43,7 @@ func (p *TCPServer) getIncConnId() uint32 {
 	return p.curConnId
 }
 
-func (p *TCPServer) Start() {
+func (p *TCPServer) Run() {
 	listener, err := net.Listen("tcp", p.conf.Address)
 	if err != nil {
 		log.Write(err.Error())

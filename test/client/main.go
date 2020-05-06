@@ -25,7 +25,7 @@ func main() {
 	for i := 0; i < 3; i++ {
 
 		tcpClient := tcp.NewClient(&serverConf, pbProcessor)
-		tcpClient.Start()
+		tcpClient.Run()
 
 		go func(idx int) {
 			for j := 0; j < 50; j++ {

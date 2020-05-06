@@ -13,7 +13,7 @@ type TCPConn struct {
 	conn     net.Conn
 	wChan    chan interface{} //写channel
 	wg       *sync.WaitGroup
-	wgParent *sync.WaitGroup
+	wgParent *sync.WaitGroup //父节点的wg，通知父节点自己已经结束
 
 	dp data.DataProcessor
 

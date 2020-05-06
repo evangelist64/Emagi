@@ -30,7 +30,7 @@ func NewClient(conf *config.ServerConf, dp data.DataProcessor) *TCPClient {
 	return c
 }
 
-func (p *TCPClient) Start() {
+func (p *TCPClient) Run() {
 
 	//TODO 尝试重连
 	conn, err := net.DialTimeout("tcp", p.conf.Address, 5*time.Second)
